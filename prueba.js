@@ -1,33 +1,23 @@
-import ClienteSql from "./sql.js";
-import { config } from "./config/mariaDB.js";
+import ClienteSql from "./models/sql.js";
+import { config } from "./config/sqlite3.js";
 
 
 const sql = new ClienteSql(config)
 
-// sql.getArticles()
-//     .then((x)=>{
-//         console.log(x)
-//     })
-//     .catch((err)=>{
-//         console.log(err)
-//         throw err
-//     })
-//     .finally(()=>{
-//         sql.close()
-//     })
+
 sql.createTable()
     .then(()=>{
         console.log("tabla creada")
 
-        const products = [
-            { name: 'Botines Adiddas', price: 25000, image: "https://i.postimg.cc/LXXXXXmB/botines-Addidas.jpg" },
-            { name: 'Raqueta Tennis', price: 125000, image: "https://i.postimg.cc/BtWQMBHM/raqueta-Head.jpg" },
+        const messages = [
+            { user: 'Pepito', message: "hola que tal" },
+            { user: 'Juansito', message: "bien bien" }
         ]
-        return sql.insertProducts(products)
+        return sql.insertMessages(messages)
     })
     .then(()=>{
         console.log("productos insertados")
-        return sql.getProducts()
+        return sql.getMessages()
     })
     .then((x)=>{
         console.log(x)

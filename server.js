@@ -2,9 +2,11 @@ import express from 'express'
 import routeProducts from './routes/productRoutes.js'
 import { createServer } from "http";
 import { Server } from "socket.io";
-import ClienteSql from "./sql.js";
+import ClienteSql from "./models/sql.js";
 import { config } from "./config/mariaDB.js";
-
+import { configsqlite } from './config/sqlite3.js';
+import morgan from 'morgan';
+import ClienteSqlChat from './models/sqlchat.js';
 
 const app = express()
 const PORT = 8081
@@ -12,7 +14,9 @@ const PORT = 8081
 const httpServer = createServer(app);
 const io = new Server(httpServer)
 const sql = new ClienteSql(config)
+const sqlite = new ClienteSqlChat(configsqlite)
 
+app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json());
 
@@ -28,15 +32,16 @@ app.get('/', (req , res)=>{
 
 const messages = []
 
+
 io.on('connection', async (socket) => {
     console.log('New user connected. Socket ID : ', socket.id);
 
-    socket.emit('products', await sql.getProducts());
+    socket.emit('products', await JSON.parse(JSON.stringify(sql.getProducts())));
 
     socket.on('update', async product => {
 
     await sql.insertProducts(product)
-    io.sockets.emit('products', await sql.getProducts());
+    io.sockets.emit('products', await JSON.parse(JSON.stringify(sql.getProducts())));
 
     })
 
@@ -46,8 +51,11 @@ io.on('connection', async (socket) => {
         socket.broadcast.emit('user-connected', name);
     });
 
-    socket.on('new-message', (message) => {
+    socket.on('new-message', async (message) => {
+        const mensajes = await sqlite.getMessages()
+        messages.push(mensajes)
         messages.push(message);
+        console.log(messages)
         socket.emit('messages', messages);
         socket.broadcast.emit('messages', messages);
     });
